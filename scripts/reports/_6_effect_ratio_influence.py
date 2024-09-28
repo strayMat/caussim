@@ -42,7 +42,7 @@ EFFECT_RATIO_INFLUENCE_EXPES = [
         Path(
             DIR2EXPES
             / "caussim_save"
-            / "caussim__nuisance_linear__candidates_ridge__overlap_06-224.parquet"
+            / "caussim__nuisance_non_linear__candidates_ridge__overlap_06-224.parquet"
         ),
         False,
         0.6,
