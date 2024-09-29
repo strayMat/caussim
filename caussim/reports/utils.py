@@ -9,6 +9,7 @@ from joblib import Parallel, delayed
 from matplotlib import pyplot as plt
 
 import numpy as np
+from pip._vendor.rich import measure
 from caussim.config import (
     DIR2EXPES,
     DIR2FIGURES,
@@ -483,13 +484,20 @@ def get_candidate_params(xp_result: pd.DataFrame):
         )
     return candidate_params
 
-def get_expe_indices(xp_result: pd.DataFrame):
+def get_expe_indices(xp_result: pd.DataFrame, measure_of_interest: str = "overlap"):
+    """
+    Get the indices of the experiment from the result dataframe, depending on the dataset.
+    
+    Args:
+        xp_result (pd.DataFrame): Dataframe containing the results of the experiment.
+        measure_of_interest (str, optional): Name of the measure of interest. Must be in ["overlap", "effect_ratio"].  Defaults to "overlap".
+    """
     dataset_name = xp_result["dataset_name"].values[0]
-    if dataset_name == "acic_2018":
-        
-        overlap_measure = "hat_d_normalized_tv"
-    else:
-        overlap_measure = "test_d_normalized_tv"
+    if measure_of_interest == "overlap":
+        if dataset_name == "acic_2018":
+            measure_of_interest = "hat_d_normalized_tv"
+        else:
+            measure_of_interest = "test_d_normalized_tv"
     if dataset_name == "acic_2016":
         if (
             len(
@@ -510,6 +518,6 @@ def get_expe_indices(xp_result: pd.DataFrame):
         expe_indices = ["test_seed"]
 
     expe_indices += [
-        overlap_measure,
+        measure_of_interest,
     ]
-    return overlap_measure, expe_indices
+    return measure_of_interest, expe_indices

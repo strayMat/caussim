@@ -52,6 +52,14 @@ EFFECT_RATIO_INFLUENCE_EXPES = [
     ),
 ]
 
+DATASET_EXPERIMENTS = [
+            (
+            {
+            CAUSSIM_LABEL: Path(DIR2EXPES / "caussim_save"/ "caussim__nuisance_non_linear__candidates_ridge__overlap_06-224.parquet")            
+            }, None, True, True, (-0.5, 1.05)
+            ),
+]
+
 @pytest.mark.parametrize(
     "xp_path, show_legend, quantile, ylim_bias_to_tau_risk, ylim_ranking, reference_metric",
     [
@@ -76,18 +84,11 @@ def test_report_causal_scores_evaluation(
     expe_causal_metrics = [
         metric for metric in CAUSAL_METRICS if metric in expe_results.columns
     ]
-    if dataset_name == "acic_2018":
-        expe_causal_metrics = [
-            m for m in expe_causal_metrics if re.search("oracle|gold", m) is None
-        ]
-        expe_results["test_d_normalized_tv"] = expe_results["hat_d_normalized_tv"]
     
     nuisance_models_label = get_nuisances_type(expe_results)
     candidate_params = get_candidate_params(expe_results)
-    _, expe_indices = get_expe_indices(expe_results)
+    effect_ratio_measure, expe_indices = get_expe_indices(expe_results, "effect_ratio")
 
-    effect_ratio_measure = "effect_ratio"
-    expe_indices+=[effect_ratio_measure]
     # ### Exclude some runs with extreme values ### #
     max_mse_ate = 1e5
     outliers_mask = expe_results["mse_ate"] >= max_mse_ate
@@ -172,7 +173,7 @@ def test_report_causal_scores_evaluation(
             ref_metric_str = ""               
         plot_kendall_compare_vs_measure(
             expe_results=expe_results,
-            measure="effect_ratio",
+            measure_of_interest="effect_ratio",
             reference_metric=reference_metric,
             expe_causal_metrics=expe_causal_metrics,
             quantile=quantile,
@@ -188,13 +189,6 @@ def test_report_causal_scores_evaluation(
         )
 
 
-DATASET_EXPERIMENTS = [
-            (
-            {
-            CAUSSIM_LABEL: Path(DIR2EXPES / "caussim_save"/ "caussim__nuisance_linear__candidates_ridge__overlap_06-224.parquet")            
-            }, None, True, True, (-0.5, 1.05)
-            ),
-]
 dataset_label = "Dataset"
 
 @pytest.mark.parametrize(
@@ -227,7 +221,8 @@ def test_plot_effect_ratio_difference(
             xp_res=xp_res_,
             reference_metric=reference_metric,
             expe_causal_metrics=expe_causal_metrics,
-            plot_middle_overlap_bin=plot_middle_bin
+            plot_middle_overlap_bin=plot_middle_bin,
+            measure_of_interest="effect_ratio",
         )
         kendall_by_effect_ratio_bin[DATASET_LABEL] = expe_name
         all_expe_results_by_bin.append(kendall_by_effect_ratio_bin)

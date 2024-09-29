@@ -1294,7 +1294,8 @@ def get_kendall_by_effect_ratio_bin(
     xp_res: pd.DataFrame,
     expe_causal_metrics: List[str],
     reference_metric: str = None,
-    plot_middle_overlap_bin: bool =True
+    plot_middle_overlap_bin: bool =True,
+    measure_of_interest: str = "overlap",
 ) -> Tuple[pd.DataFrame, str]:
     """Group by effect ratio bin a kendall with reference to the kendall of a given metric 
 
@@ -1321,9 +1322,7 @@ def get_kendall_by_effect_ratio_bin(
     """
     aggregation_f_name = kendalltau_stats.__name__
     candidate_params = get_candidate_params(xp_res)
-    _, expe_indices = get_expe_indices(xp_res)
-    effect_ratio_measure = "effect_ratio"
-    expe_indices += [effect_ratio_measure]
+    effect_ratio_measure, expe_indices = get_expe_indices(xp_res, measure_of_interest=measure_of_interest)
     
     expe_rankings = get_metric_rankings_by_dataset(
         expe_results=xp_res,
@@ -1399,7 +1398,7 @@ def plot_kendall_compare_vs_measure(
     expe_results:  pd.DataFrame,
     reference_metric: str,
     expe_causal_metrics: List[str],
-    measure: str="overlap",
+    measure_of_interest: str="overlap",
     quantile: float = 0.5,
     ylim_ranking: Tuple[float, float] = (-1.0, 1.0),
     
@@ -1424,10 +1423,7 @@ def plot_kendall_compare_vs_measure(
         _description_
     """
     candidate_params = get_candidate_params(expe_results)
-    measure, expe_indices = get_expe_indices(expe_results)
-    if measure == "effect_ratio":
-        expe_indices += [measure]
-        measure = "effect_ratio"
+    measure_of_interest, expe_indices = get_expe_indices(expe_results, measure_of_interest=measure_of_interest)
     expe_rankings = get_metric_rankings_by_dataset(
             expe_results=expe_results,
             expe_indices=expe_indices,
@@ -1443,7 +1439,7 @@ def plot_kendall_compare_vs_measure(
     ax = plot_ranking_aggregation(
         rankings_aggregation=rankings_agg,
         expe_indices=expe_indices,
-        x_metric_name=measure,
+        x_metric_name=measure_of_interest,
         lowess_type="lowess_quantile",
         lowess_kwargs={"frac": 0.66, "it": 10, "quantile": quantile},
         show_legend=False,
