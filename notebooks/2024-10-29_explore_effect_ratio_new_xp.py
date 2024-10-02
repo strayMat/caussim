@@ -28,3 +28,5 @@ logs_linear[linear_xp_indices+["r_risk", "r_risk_gold_e"]].head()
 #%%
 logs_non_linear[linear_xp_indices+["r_risk", "r_risk_gold_e"]].head()
 
+effect_ratio_distribution = logs_non_linear["effect_ratio"].drop_duplicates().describe(percentiles=[0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99])
+print(effect_ratio_distribution.to_markdown())

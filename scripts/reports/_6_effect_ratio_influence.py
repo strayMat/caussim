@@ -3,6 +3,7 @@ from typing import List, Tuple
 import pandas as pd
 import numpy as np
 
+import logging
 import pytest
 from caussim.reports import (
     plot_agreement_w_tau_risk,
@@ -231,8 +232,11 @@ def test_plot_effect_ratio_difference(
     ds_order = [ds_label_ for ds_label_ in DATASETS_PALETTE.keys() if ds_label_ in ds_used]
     # Weak overlap first
     overlap_order = [ov_ for ov_ in EFFECT_RATIO_BIN_LABELS if ov_ in all_expe_results_by_bin_df[EFFECT_RATIO_BIN_COL].unique()][::-1]
+    
     metric_order = [CAUSAL_METRIC_LABELS[metric_label_] for metric_label_ in METRIC_ORDER]    
 
+    effect_ratio_distrib  = all_expe_results_by_bin_df["effect_ratio"].drop_duplicates().describe(percentiles=[0.1, 0.25, 0.5, 0.75, 0.9])
+    print(f"Effect ratio distribution: {effect_ratio_distrib.transpose().to_markdown()}")
     # Full figure
     g = sns.FacetGrid(
         data=all_expe_results_by_bin_df, 

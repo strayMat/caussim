@@ -27,9 +27,9 @@ generator = check_random_state(RANDOM_STATE)
 # %% 
 xp_grid = {
         "dataset_name": ["caussim"],
-        "overlap": generator.uniform(0, 2.5, size=100),
-        "random_state": list(range(1, 4)),
-        "treatment_ratio": [0.25, 0.5, 0.75],
+        "overlap": [0.1, 1, 1.5],#generator.uniform(0, 1, size=10),
+        "random_state": list(range(0, 10)),
+        "treatment_ratio": [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99],
     }
 
 delta_mu_of_x_grid = []
@@ -40,13 +40,13 @@ for dataset_setup in tqdm(ParameterGrid(xp_grid)):
     
         mean_causal_effect(dataset.df.mu_1, dataset.df.mu_0)
     )
-# %%
+#%%
 delta_mu_of_x_grid_ = np.array(delta_mu_of_x_grid)
 delta_mu_of_x_grid_wo_xtrm = delta_mu_of_x_grid_[np.abs(delta_mu_of_x_grid_) < 100]
 print(pd.DataFrame(delta_mu_of_x_grid).describe(
     percentiles=np.array([1, 10, 25, 50, 60, 65, 70, 75, 90, 99])/100).T.to_markdown(index=False)
     )
-
+# %%
 plt.hist(delta_mu_of_x_grid_wo_xtrm, bins=100)
 plt.xlim(0, 50)
 # %%
