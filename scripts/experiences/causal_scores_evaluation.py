@@ -1,6 +1,7 @@
 """
 Score several g-formula models with mu_iptw_risk (reweighted mse) and mu_risk (mse on y) on different semi-simulated datasets
 """
+
 import argparse
 from datetime import datetime
 import numpy as np
@@ -23,7 +24,7 @@ from caussim.experiences.base_config import (
     CATE_CONFIG_LOGISTIC_NUISANCES,
     DATASET_GRID_EXTRAPOLATION_RESIDUALS,
     DATASET_GRID_FULL_EXPES,
-    ACIC_2018_PARAMS
+    ACIC_2018_PARAMS,
 )
 
 from caussim.experiences.utils import compute_w_slurm, set_causal_score_xp_name
@@ -32,32 +33,43 @@ RANDOM_STATE = 0
 generator = check_random_state(RANDOM_STATE)
 
 SMALL_DATASET_GRID = [
-    {"dataset_name": ["acic_2016"], "dgp": list(range(1, 78)),"random_state": list(range(1, 11))},
+    {
+        "dataset_name": ["acic_2016"],
+        "dgp": list(range(1, 78)),
+        "random_state": list(range(1, 11)),
+    },
     {
         "dataset_name": ["caussim"],
         "overlap": generator.uniform(0, 2.5, size=100),
         "random_state": list(range(1, 4)),
         "treatment_ratio": [0.25, 0.5, 0.75],
     },
-    {"dataset_name": ["twins"],"overlap": generator.uniform(0.1, 3, size=100), "random_state": list(np.arange(10))},
-    {"dataset_name": ["acic_2018"], "ufid": ACIC_2018_PARAMS.loc[ACIC_2018_PARAMS["size"] <=5000, "ufid"].values},
+    {
+        "dataset_name": ["twins"],
+        "overlap": generator.uniform(0.1, 3, size=100),
+        "random_state": list(np.arange(10)),
+    },
+    {
+        "dataset_name": ["acic_2018"],
+        "ufid": ACIC_2018_PARAMS.loc[ACIC_2018_PARAMS["size"] <= 5000, "ufid"].values,
+    },
 ]
-#DATASET_GRID = DATASET_GRID_FULL_EXPES
+# DATASET_GRID = DATASET_GRID_FULL_EXPES
 CAUSAL_RATIO_GRID = [
     {
         "dataset_name": ["caussim"],
-        "overlap": generator.uniform(0, 2.5, size=10),
-        "random_state": list(range(1, 2)),
-        "treatment_ratio": [0.25, 0.5, 0.75],
-        "effect_size": [0.1, 0.5, 0.9],
+        "overlap": generator.uniform(0, 2, size=4),
+        "random_state": list(range(0, 5)),
+        "effect_size": [0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99],
+        "treatment_ratio": [0.25],
     },
-]# bigger grid was 25 different overlaps and 5 random states
-DATASET_GRID = CAUSAL_RATIO_GRID#SMALL_DATASET_GRID
+]  # bigger grid was 25 different overlaps and 5 random states
+DATASET_GRID = CAUSAL_RATIO_GRID  # SMALL_DATASET_GRID
 
 # Fixing this parameter to non 0 separate the test set into a train set and a
 # test distinct from the nuisance set (kept to the same size)
-XP_CATE_CONFIG_SETUP =  CATE_CONFIG_ENSEMBLE_NUISANCES.copy()
-#XP_CATE_CONFIG_SETUP =  CATE_CONFIG_LOGISTIC_NUISANCES.copy()
+XP_CATE_CONFIG_SETUP = CATE_CONFIG_ENSEMBLE_NUISANCES.copy()
+# XP_CATE_CONFIG_SETUP =  CATE_CONFIG_LOGISTIC_NUISANCES.copy()
 XP_CATE_CONFIG_SETUP["separate_train_set_ratio"] = 0
 
 # ### Evaluate several dgps ### #
