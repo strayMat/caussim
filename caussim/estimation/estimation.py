@@ -111,6 +111,9 @@ def get_selection_metrics(causal_df: CausalDf, predictions: pd.DataFrame) -> Dic
     ]
     ## effect ratio 
     simulation_scores["effect_ratio"] = test_oracles["effect_ratio"]
+    simulation_scores["effect_ratio_sym"] = test_oracles["effect_ratio_sym"]
+    simulation_scores["effect_ratio_sym2"] = test_oracles["effect_ratio_sym2"]
+    simulation_scores["effect_variation"] = test_oracles["effect_variation"]
     ### First xps has a typo...
     simulation_scores["heterogeneity_score"] = test_oracles.get(
         "heterogeneity_score", test_oracles.get("hetereogeneity_score", None)
