@@ -181,7 +181,7 @@ def test_report_causal_scores_evaluation(
     boxplot_df = get_data_from_facetgrid_boxplot(
         data=g.data, **boxplot_data_args, col=g._col_var, col_order=g.col_names
     )
-    # breakpoint()
+
     pretty_boxplot_df = boxplot_df.style.format(precision=2).to_latex(
         hrules=True, clines="all;data"
     )
