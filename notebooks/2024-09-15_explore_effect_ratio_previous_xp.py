@@ -2,7 +2,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from caussim.data.causal_df import CausalDf, mean_causal_effect_symetric
+from caussim.data.causal_df import CausalDf, mean_causal_effect_symmetric
 pd.set_option('display.max_columns', None)
 import yaml
 from sklearn.model_selection import ParameterGrid
@@ -48,7 +48,7 @@ for dataset_setup in tqdm(list(ParameterGrid(CAUSAL_RATIO_GRID))[:5]):
     df_nuisance_set = sim.sample(num_samples=dataset_config["train_size"]).df
     sim.rs_gaussian = dataset_config["test_seed"]
     df_test = sim.sample(num_samples=dataset_config["test_size"]).df
-    delta_mu_s = mean_causal_effect_symetric(dgp_sample.df.mu_1, dgp_sample.df.mu_0)
+    delta_mu_s = mean_causal_effect_symmetric(dgp_sample.df.mu_1, dgp_sample.df.mu_0)
     description_test = CausalDf(df_test.reset_index(drop=True)).describe(prefix="test_")
     delta_mu_distrib.append(delta_mu_s)
 # %%

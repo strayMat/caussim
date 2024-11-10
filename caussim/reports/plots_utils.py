@@ -189,6 +189,9 @@ METRIC_OF_INTEREST_LABELS = {
     "heterogeneity_score": r"$\mathcal{H}$",
     "heterogeneity_score_norm": r"$\mathcal{H}/|ATE|$",
     "effect_ratio": r"$\frac{1}{N} \sum_{i=1}^N | \frac{\mu_{1}(x_i) - \mu_{0}(x_i)}{\mu_{0}(x_i)}|$",
+    "effect_ratio_sym": r"\frac{1}{N} \sum_{i=1}^N  \frac{|\mu_{1}(x_i) - \mu_{0}(x_i)|}{|\mu_{0}(x_i) + \mu_{1}(x_i) - \frac{1}{N} \sum_{i=j}^N\mu_{0}(x_j) + \mu_{1}(x_j)|}",
+    "effect_ratio_sym2":r"\frac{1}{N} \sum_{i=1}^N\frac{\frac{1}{N} \sum_{i=1}^N |\mu_{1}(x_i) - \mu_{0}(x_i)|}{ |\mu_{0}(x_i) + \mu_{1}(x_i) - \frac{1}{N} \sum_{j=1}^N \mu_{0}(x_j) + \mu_{1}(x_j)|}", 
+    "effect_variation": r"\hat_{var}(\mu_1 - \mu_0) / \hat_{var}(\mu_1+\mu_0)"
 }
 
 ORACLE_METRIC_NAMES = [
@@ -223,7 +226,12 @@ OVERLAP_BIN_PALETTE = dict(
         sns.color_palette("YlOrRd", n_colors=len(OVERLAP_BIN_LABELS)),
     )
 )
-EFFECT_RATIO_BIN_COL = "Causal effect ratio"
+EFFECT_RATIO_BIN_COL = {
+    "effect_ratio":"Causal effect ratio (not symmetric)",
+    "effect_ratio_sym":"Causal effect ratio",
+    "effect_ratio_sym2":"Causal effect ratio (variant)",
+    "effect_variation":"Causal effect variation",
+}
 EFFECT_RATIO_BIN_LABELS = ["Low", "Medium", "High"]
 EFFECT_RATIO_BIN_PALETTE = dict(
     zip(
@@ -1462,7 +1470,7 @@ def get_kendall_by_effect_ratio_bin(
         for b_low, b_sup in zip(bins_values[:-1], bins_values[1:])
     ]
     print("Bins labels", bins_labels)
-    rankings_aggregation_melted[EFFECT_RATIO_BIN_COL] = pd.cut(
+    rankings_aggregation_melted[EFFECT_RATIO_BIN_COL[measure_of_interest]] = pd.cut(
         rankings_aggregation_melted[effect_ratio_measure],
         bins=bins_values,
         labels=EFFECT_RATIO_BIN_LABELS,
@@ -1477,7 +1485,7 @@ def get_kendall_by_effect_ratio_bin(
     else:
         kept_bins = [EFFECT_RATIO_BIN_LABELS[0], EFFECT_RATIO_BIN_LABELS[2]]
     rankings_aggregation_melted = rankings_aggregation_melted.loc[
-        rankings_aggregation_melted[EFFECT_RATIO_BIN_COL].isin(kept_bins)
+        rankings_aggregation_melted[EFFECT_RATIO_BIN_COL[measure_of_interest]].isin(kept_bins)
     ]
     # adding type of metrics: feasible vs. semi-oracle
     rankings_aggregation_melted[METRIC_TYPE] = rankings_aggregation_melted[

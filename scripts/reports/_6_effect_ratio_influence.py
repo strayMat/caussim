@@ -38,20 +38,6 @@ sns.set_style("whitegrid")
 
 script_name = "_6_effect_ratio_influence"
 
-EFFECT_RATIO_INFLUENCE_EXPES = [
-    (
-        Path(
-            DIR2EXPES
-            / "caussim_save"
-            / "caussim__nuisance_non_linear__candidates_ridge__overlap_35-139.parquet"
-        ),
-        False,
-        0.6,
-        (1e-3, 5 * 1e0),
-        (0, 1.05),
-        None,
-    ),
-]
 
 DATASET_EXPERIMENTS = [
     (
@@ -66,145 +52,57 @@ DATASET_EXPERIMENTS = [
         True,
         True,
         (-0.5, 1.05),
+        "effect_ratio"
+    ),
+    (
+        {
+            CAUSSIM_LABEL: Path(
+                DIR2EXPES
+                / "caussim_save"
+                / "caussim__nuisance_non_linear__candidates_ridge__overlap_35-139.parquet"
+            )
+        },
+        None,
+        True,
+        True,
+        (-0.5, 1.05),
+        "effect_ratio_sym"
+    ),
+    (
+        {
+            CAUSSIM_LABEL: Path(
+                DIR2EXPES
+                / "caussim_save"
+                / "caussim__nuisance_non_linear__candidates_ridge__overlap_35-139.parquet"
+            )
+        },
+        None,
+        True,
+        True,
+        (-0.5, 1.05),
+        "effect_ratio_sym2"
+    ),
+    (
+        {
+            CAUSSIM_LABEL: Path(
+                DIR2EXPES
+                / "caussim_save"
+                / "caussim__nuisance_non_linear__candidates_ridge__overlap_35-139.parquet"
+            )
+        },
+        None,
+        True,
+        True,
+        (-0.5, 1.05),
+        "effect_variation"
     ),
 ]
 
-
-@pytest.mark.parametrize(
-    "xp_path, show_legend, quantile, ylim_bias_to_tau_risk, ylim_ranking, reference_metric",
-    [
-        *EFFECT_RATIO_INFLUENCE_EXPES,
-    ],
-)
-def test_report_causal_scores_evaluation(
-    xp_path: Path,
-    show_legend: bool,
-    quantile: float,
-    ylim_bias_to_tau_risk: Tuple[float, float],
-    ylim_ranking: Tuple[float, float],
-    reference_metric: str,
-):
-    # parameter to select what to be plotted:
-    RANKING_COMPUTE = True
-    BEST_ESTIMATOR_PLOT = True
-    expe_results, _ = read_logs(xp_path)
-    dataset_name = expe_results["dataset_name"].values[0]
-
-    # TODO: Maybe remove some metrics here
-    expe_causal_metrics = [
-        metric for metric in CAUSAL_METRICS if metric in expe_results.columns
-    ]
-
-    nuisance_models_label = get_nuisances_type(expe_results)
-    candidate_params = get_candidate_params(expe_results)
-    effect_ratio_measure, expe_indices = get_expe_indices(expe_results, "effect_ratio")
-
-    # ### Exclude some runs with extreme values ### #
-    max_mse_ate = 1e5
-    outliers_mask = expe_results["mse_ate"] >= max_mse_ate
-    outliers = expe_results.loc[outliers_mask]
-    expe_results = expe_results.loc[~outliers_mask]
-    logging.warning(f"Removing {outliers_mask.sum()} with mse_ate>{max_mse_ate}")
-    logging.info(
-        f"Nb (simulations x test_seed) : {len(expe_results[expe_indices].drop_duplicates())}"
-    )
-    if BEST_ESTIMATOR_PLOT:
-        best_estimator_by_dataset = get_best_estimator_by_dataset(
-            expe_logs=expe_results,
-            expe_indices=expe_indices,
-            candidate_params=candidate_params,
-            causal_metrics=expe_causal_metrics,
-        )
-
-        comparison_df_w_random = pd.concat(
-            [
-                best_estimator_by_dataset[metric]
-                for metric in [*expe_causal_metrics, "random"]
-            ]
-        )
-        comparison_df_w_best_as_oracle = comparison_df_w_random.merge(
-            best_estimator_by_dataset["tau_risk"][
-                ["tau_risk", "run_id", *expe_indices]
-            ],
-            on=expe_indices,
-            how="left",
-            suffixes=("", "_as_oracle"),
-        )
-        comparison_df_w_best_as_oracle["normalized_bias_tau_risk_to_best_method"] = (
-            np.abs(
-                comparison_df_w_best_as_oracle["tau_risk"]
-                - comparison_df_w_best_as_oracle["tau_risk_as_oracle"]
-            )
-            / comparison_df_w_best_as_oracle["tau_risk_as_oracle"]
-        )
-        ax, n_found_oracles_grouped_overlap = plot_agreement_w_tau_risk(
-            comparison_df_w_best_as_oracle,
-            effect_ratio_measure,
-            nuisance_models_label=nuisance_models_label,
-            show_legend=show_legend,
-        )
-        plt.tight_layout()
-        save_figure_to_folders(
-            figure_name=Path(f"agreement_w_tau_risk/{xp_path.stem}"),
-            figure_dir=True,
-            notes_dir=False,
-            paper_dir=True,
-        )
-
-        # ### Main figure ### #
-        evaluation_measures = ["normalized_bias_tau_risk_to_best_method"]
-        for eval_m in evaluation_measures:
-            ax = plot_evaluation_metric(
-                comparison_df_w_best_as_oracle=comparison_df_w_best_as_oracle,
-                evaluation_metric=eval_m,
-                measure_of_interest_name=effect_ratio_measure,
-                selection_metrics=expe_causal_metrics,
-                lowess_type="lowess_quantile",
-                lowess_kwargs={"frac": 0.6, "num_fits": 10, "quantile": quantile},
-                nuisance_models_label=None,
-                ylog=True,
-                show_legend=show_legend,
-                plot_lowess_ci=False,
-            )
-
-            ax.set(ylim=ylim_bias_to_tau_risk)
-            plt.tight_layout()
-            save_figure_to_folders(
-                figure_name=Path(f"{eval_m}/{xp_path.stem}"),
-                figure_dir=True,
-                notes_dir=False,
-                paper_dir=True,
-            )
-
-    if RANKING_COMPUTE:
-        if reference_metric is not None:
-            ref_metric_str = f"_ref_metric_{reference_metric}"
-        else:
-            ref_metric_str = ""
-        plot_kendall_compare_vs_measure(
-            expe_results=expe_results,
-            measure_of_interest="effect_ratio",
-            reference_metric=reference_metric,
-            expe_causal_metrics=expe_causal_metrics,
-            quantile=quantile,
-            ylim_ranking=ylim_ranking,
-        )
-        plt.tight_layout()
-
-        save_figure_to_folders(
-            figure_name=Path(f"kendalls_tau{ref_metric_str}/{xp_path.stem}"),
-            figure_dir=True,
-            notes_dir=False,
-            paper_dir=True,
-        )
-
-
 dataset_label = "Dataset"
 
-
 @pytest.mark.parametrize(
-    "xp_paths, reference_metric, plot_legend, plot_middle_bin, xlim",
-    [*DATASET_EXPERIMENTS],
+    "xp_paths, reference_metric, plot_legend, plot_middle_bin, xlim, effect_ratio_measure_variant",
+    DATASET_EXPERIMENTS,
 )
 def test_plot_effect_ratio_difference(
     xp_paths: Dict[str, Path],
@@ -212,6 +110,7 @@ def test_plot_effect_ratio_difference(
     plot_legend: bool,
     plot_middle_bin: bool,
     xlim: Tuple[float, float],
+    effect_ratio_measure_variant: str
 ):
     all_expe_results_by_bin = []
     for expe_name, xp_path in xp_paths.items():
@@ -221,18 +120,14 @@ def test_plot_effect_ratio_difference(
             metric for metric in CAUSAL_METRICS if (metric in xp_res_.columns)
         ]
         dataset_name = xp_res_["dataset_name"].values[0]
-        if dataset_name == "acic_2018":
-            xp_res_["test_d_normalized_tv"] = xp_res_["hat_d_normalized_tv"]
-            expe_causal_metrics = [
-                m for m in expe_causal_metrics if re.search("oracle|gold", m) is None
-            ]
+        
         kendall_by_effect_ratio_bin, evaluation_metric = (
             get_kendall_by_effect_ratio_bin(
                 xp_res=xp_res_,
                 reference_metric=reference_metric,
                 expe_causal_metrics=expe_causal_metrics,
                 plot_middle_overlap_bin=plot_middle_bin,
-                measure_of_interest="effect_ratio",
+                measure_of_interest=effect_ratio_measure_variant,
             )
         )
         kendall_by_effect_ratio_bin[DATASET_LABEL] = expe_name
@@ -246,20 +141,20 @@ def test_plot_effect_ratio_difference(
     effect_ratio_order = [
         ov_
         for ov_ in EFFECT_RATIO_BIN_LABELS
-        if ov_ in all_expe_results_by_bin_df[EFFECT_RATIO_BIN_COL].unique()
+        if ov_ in all_expe_results_by_bin_df[EFFECT_RATIO_BIN_COL[effect_ratio_measure_variant]].unique()
     ]  # [::-1]
 
     metric_order = [
         CAUSAL_METRIC_LABELS[metric_label_] for metric_label_ in METRIC_ORDER
     ]
 
-    effect_ratio_distrib = (
-        all_expe_results_by_bin_df["effect_ratio"]
+    effect_ratio_measure_distrib = (
+        all_expe_results_by_bin_df[effect_ratio_measure_variant]
         .drop_duplicates()
         .describe(percentiles=[0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99])
     )
     print(
-        f"Effect ratio distribution: {effect_ratio_distrib.transpose().to_markdown()}"
+        f"Effect ratio measure distribution: {effect_ratio_measure_distrib.transpose().to_markdown()}"
     )
     # Full figure
     g = sns.FacetGrid(
@@ -275,7 +170,7 @@ def test_plot_effect_ratio_difference(
         x=evaluation_metric,
         y=METRIC_LABEL,
         order=metric_order,
-        hue=EFFECT_RATIO_BIN_COL,
+        hue=EFFECT_RATIO_BIN_COL[effect_ratio_measure_variant],
         hue_order=effect_ratio_order,
         palette=EFFECT_RATIO_BIN_PALETTE,
         linewidth=2,
@@ -296,7 +191,7 @@ def test_plot_effect_ratio_difference(
         legend_data = g._legend_data  # type: ignore
         g._legend.remove()  # type: ignore
         g.add_legend(
-            title=EFFECT_RATIO_BIN_COL,
+            title=EFFECT_RATIO_BIN_COL[effect_ratio_measure_variant],
             legend_data=legend_data,
             loc="upper center",
             ncol=3,
@@ -309,7 +204,7 @@ def test_plot_effect_ratio_difference(
     save_figure_to_folders(
         figure_name=Path(
             script_name
-            + f"/effect_ratio_by_bin_comparaison_{ref_metric_str}_by_{DATASET_LABEL}"
+            + f"/effect_ratio_by_bin_comparaison_{ref_metric_str}_by_{DATASET_LABEL}_{effect_ratio_measure_variant}"
         ),
         figure_dir=True,
         notes_dir=False,
@@ -337,7 +232,7 @@ def test_plot_effect_ratio_difference(
         x=evaluation_metric,
         y=METRIC_LABEL,
         order=sub_metrics,
-        hue=EFFECT_RATIO_BIN_COL,
+        hue=EFFECT_RATIO_BIN_COL[effect_ratio_measure_variant],
         hue_order=effect_ratio_order,
         palette=EFFECT_RATIO_BIN_PALETTE,
         linewidth=2,
@@ -357,7 +252,7 @@ def test_plot_effect_ratio_difference(
     save_figure_to_folders(
         figure_name=Path(
             script_name
-            + f"/effect_ratio_by_bin_comparaison_{ref_metric_str}_by_{DATASET_LABEL}_r_risk_only"
+            + f"/effect_ratio_by_bin_comparaison_{ref_metric_str}_by_{DATASET_LABEL}_r_risk_only_{effect_ratio_measure_variant}"
         ),
         figure_dir=True,
         notes_dir=False,

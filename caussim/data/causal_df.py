@@ -5,7 +5,7 @@ from caussim.estimation.scores import heterogeneity_score
 
 from caussim.pdistances.divergences import jensen_shannon_divergence
 from caussim.pdistances.mmd import total_variation_distance
-from caussim.pdistances.effect_size import mean_causal_effect, mean_causal_effect_symetric, mean_causal_effect_symetric_variante, mean_causal_variation
+from caussim.pdistances.effect_size import mean_causal_effect, mean_causal_effect_symmetric, mean_causal_effect_symmetric_variante, mean_causal_variation
 
 class CausalDf(object):
     def __init__(
@@ -63,8 +63,8 @@ class CausalDf(object):
             n_bins=10,
         )        
         effect_ratio = mean_causal_effect(self.df["mu_1"], self.df["mu_0"])
-        effect_ratio_sym = mean_causal_effect_symetric(self.df["mu_1"], self.df["mu_0"])
-        effect_ratio_sym2 = mean_causal_effect_symetric_variante(self.df["mu_1"], self.df["mu_0"])
+        effect_ratio_sym = mean_causal_effect_symmetric(self.df["mu_1"], self.df["mu_0"])
+        effect_ratio_sym2 = mean_causal_effect_symmetric_variante(self.df["mu_1"], self.df["mu_0"])
         effect_variation = mean_causal_variation(self.df["mu_1"], self.df["mu_0"])
 
         ate = cate.mean()
